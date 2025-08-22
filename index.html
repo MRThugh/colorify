@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Colorify v3 Pro</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { vazir: ['Vazirmatn', 'system-ui', 'sans-serif'] },
+          boxShadow: {
+            neu: '8px 8px 24px rgba(0,0,0,.2), -8px -8px 24px rgba(255,255,255,.15)',
+            glass: '0 20px 40px rgba(0,0,0,.25)'
+          },
+          colors: {
+            basebg: {
+              light: '#eef2f6',
+              dark: '#0b1220'
+            }
+          },
+          keyframes: {
+            shimmer: { '0%': { backgroundPosition: '0% 50%' }, '100%': { backgroundPosition: '100% 50%' } },
+            floaty: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-6px)' } },
+            sparkle: { '0%': { opacity: .2, transform: 'scale(.9)' }, '50%': { opacity: 1, transform: 'scale(1.1)' }, '100%': { opacity: .2, transform: 'scale(.9)' } }
+          },
+          animation: {
+            shimmer: 'shimmer 6s linear infinite',
+            floaty: 'floaty 3s ease-in-out infinite',
+            sparkle: 'sparkle 1.6s ease-in-out infinite'
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Vazirmatn font -->
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --glass: rgba(255,255,255,0.14);
+      --glass-dark: rgba(13,18,33,0.6);
+      --blur: blur(12px);
+    }
+    html, body { height: 100%; }
+    body { font-family: Vazirmatn, system-ui, sans-serif; }
+    /* Glassmorphism container */
+    .glass {
+      background: var(--glass);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .glass-dark { background: var(--glass-dark); border: 1px solid rgba(255,255,255,.06); }
+
+    /* Uiverse.io Madflows style buttons (3D + hover) */
+    .btn-3d {
+      position: relative; border: 0; outline: 0; isolation: isolate; cursor: pointer;
+      padding: .9rem 1.2rem; border-radius: 1rem; font-weight: 700;
+      box-shadow: inset 0 -6px rgba(0,0,0,.25), 0 12px 24px rgba(0,0,0,.18);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .btn-3d:active { transform: translateY(2px); box-shadow: inset 0 -3px rgba(0,0,0,.25), 0 8px 18px rgba(0,0,0,.2); }
+    .btn-3d .icon { margin-left: .5rem; }
+
+    /* Uiverse.io switcher (animated) */
+    .switch { --w: 60px; --h: 34px; position: relative; display: inline-block; width: var(--w); height: var(--h); }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(120deg,#c0e3ff,#f4d2ff); transition: .4s; border-radius: 999px; box-shadow: inset 0 6px 14px rgba(0,0,0,.15); }
+    .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background: white; transition: .4s; border-radius: 50%; box-shadow: 0 6px 14px rgba(0,0,0,.25); }
+    input:checked + .slider { background: linear-gradient(120deg,#0ea5e9,#8b5cf6,#f59e0b); }
+    input:checked + .slider:before { transform: translateX(26px); }
+
+    /* Color card neumorphism + interactions */
+    .color-card { transition: transform .18s ease, box-shadow .18s ease; }
+    .color-card:hover { transform: translateY(-4px); }
+
+    /* Lock button */
+    .lock-btn { backdrop-filter: blur(6px); }
+
+    /* Toast */
+    #toast { pointer-events: none; }
+
+    /* Fullscreen animation overlay */
+    #fxOverlay { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; }
+    .fx-bg { position: absolute; inset: 0; background: conic-gradient(from 0deg, #06b6d4, #f59e0b, #22c55e, #8b5cf6, #06b6d4); filter: blur(60px); opacity: .35; animation: spin 6s linear infinite; }
+    @keyframes spin { to { transform: rotate(1turn); } }
+    .spark { position: absolute; width: 10px; height: 10px; border-radius: 999px; background: white; opacity: .7; animation: pop 900ms ease forwards; }
+    @keyframes pop { 0% { transform: scale(.4); opacity:.2 } 70% { transform: scale(1.4); opacity: .9 } 100% { transform: scale(0.8); opacity:.0 } }
+
+    /* Small harmony chart dots */
+    #harmonyChart { width: 220px; height: 220px; }
+
+    .ltr { direction: ltr; }
+  </style>
+</head>
+<body class="min-h-screen bg-basebg-light dark:bg-basebg-dark transition-colors duration-300">
+  <!-- Background gradient + blur layers -->
+  <div class="fixed inset-0 -z-10 bg-gradient-to-br from-cyan-300/30 via-fuchsia-300/20 to-amber-200/30 dark:from-sky-900/30 dark:via-fuchsia-900/20 dark:to-amber-900/30"></div>
+  <div class="fixed inset-0 -z-10 backdrop-blur-3xl"></div>
+
+  <!-- Header -->
+  <header class="container mx-auto px-4 pt-6">
+    <div class="glass dark:glass-dark rounded-2xl shadow-glass px-4 sm:px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-400 via-fuchsia-400 to-amber-300 shadow-neu animate-floaty"></div>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-fuchsia-600 to-amber-600 dark:from-sky-300 dark:via-fuchsia-300 dark:to-amber-300">Colorify v3 Pro</h1>
+          <p class="text-xs sm:text-sm text-slate-700/80 dark:text-slate-300/80">اپلیکیشن حرفه‌ای تولید و مدیریت پالت رنگ</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <!-- Dark/Light Switcher (Uiverse.io style) -->
+        <label class="switch" title="حالت دارک/لایت">
+          <input id="themeToggle" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <!-- Controls -->
+  <section class="container mx-auto px-4 mt-6">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <!-- Action panel -->
+      <div class="xl:col-span-2 glass dark:glass-dark rounded-3xl shadow-neu p-4 sm:p-6">
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="btnGenerate" class="btn-3d bg-gradient-to-r from-sky-400 to-fuchsia-400 text-slate-900 dark:text-white" title="تولید پالت تصادفی"><span class="icon">✨</span>تولید پالت</button>
+
+          <button id="btnSave" class="btn-3d bg-gradient-to-r from-emerald-400 to-lime-400 text-slate-900" title="ذخیره پالت"><span class="icon">💾</span>ذخیره پالت</button>
+
+          <button id="btnExportPNG" class="btn-3d bg-gradient-to-r from-amber-300 to-pink-300 text-slate-900" title="دانلود تصویر"><span class="icon">🖼️</span>دانلود PNG</button>
+
+          <button id="btnExportJSON" class="btn-3d bg-gradient-to-r from-indigo-300 to-sky-300 text-slate-900" title="خروجی JSON"><span class="icon">📦</span>Export JSON</button>
+
+          <label class="btn-3d bg-white/70 dark:bg-white/10 text-slate-900 dark:text-white cursor-pointer" title="Import JSON">
+            <input id="importFile" type="file" accept="application/json" class="hidden" />
+            <span class="icon">📥</span>Import JSON
+          </label>
+
+          <div class="flex items-center gap-2 ms-auto">
+            <label class="text-slate-700 dark:text-slate-300 text-sm">تعداد رنگ:</label>
+            <input id="countRange" type="range" min="5" max="10" value="5" class="w-40 accent-fuchsia-500"/>
+            <span id="countBadge" class="text-sm font-bold w-6 text-center text-slate-900 dark:text-slate-100">5</span>
+          </div>
+        </div>
+
+        <!-- Manual add color -->
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <input id="manualColor" type="text" placeholder="#AABBCC یا hsl(…) یا rgb(…)" class="ltr glass dark:glass-dark rounded-xl px-4 py-2 text-sm outline-none focus:ring-4 ring-fuchsia-400/40"/>
+          <button id="btnAddColor" class="btn-3d bg-gradient-to-r from-rose-300 to-amber-300 text-slate-900"><span class="icon">➕</span>افزودن رنگ</button>
+          <span class="text-xs text-slate-600 dark:text-slate-300">(در صورت بیشتر از تعداد، رنگ آخر حذف می‌شود)</span>
+        </div>
+      </div>
+
+      <!-- Analysis panel -->
+      <div class="glass dark:glass-dark rounded-3xl shadow-neu p-4 sm:p-6">
+        <h3 class="text-lg font-bold mb-3">🔬 تحلیل رنگ‌ها</h3>
+        <div id="analysis" class="space-y-3 text-sm text-slate-800 dark:text-slate-200">
+          <div class="flex items-center gap-4">
+            <canvas id="harmonyChart" class="rounded-2xl bg-white/50 dark:bg-white/5 shadow-inner"></canvas>
+            <div class="space-y-2">
+              <div>میانگین روشنایی: <span id="avgLum" class="font-bold ltr"></span></div>
+              <div>دامنه هیو (Hue): <span id="hueRange" class="font-bold ltr"></span></div>
+              <div>کنتراست همسایه‌ها (WCAG): <span id="minContrast" class="font-bold ltr"></span></div>
+            </div>
+          </div>
+          <div class="pt-2">
+            <details class="open:animate-[fadeIn_.3s_ease]">
+              <summary class="cursor-pointer select-none">جدول کنتراست جفتی</summary>
+              <div id="contrastTable" class="mt-2 overflow-auto max-h-48 text-xs"></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Palette grid -->
+  <main class="container mx-auto px-4 mt-6">
+    <div id="paletteGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+  </main>
+
+  <!-- Saved palettes -->
+  <section class="container mx-auto px-4 mt-8 mb-20">
+    <div class="glass dark:glass-dark rounded-3xl shadow-neu p-4 sm:p-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold">📚 پالت‌های ذخیره‌شده</h3>
+        <div class="flex items-center gap-2">
+          <input id="filterCat" type="text" placeholder="فیلتر دسته…" class="glass dark:glass-dark rounded-xl px-3 py-2 text-xs outline-none focus:ring-4 ring-sky-400/40"/>
+          <button id="btnClearAll" class="btn-3d bg-gradient-to-r from-red-300 to-rose-400 text-slate-900"><span class="icon">🗑️</span>حذف همه</button>
+        </div>
+      </div>
+      <div id="savedList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+    </div>
+  </section>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+    <div class="glass dark:glass-dark rounded-2xl px-4 py-3 shadow-glass text-sm font-bold">📋 کپی شد</div>
+  </div>
+
+  <!-- Fullscreen FX Overlay -->
+  <div id="fxOverlay" class="">
+    <div class="fx-bg"></div>
+    <div class="relative z-10 text-white font-extrabold text-3xl sm:text-5xl drop-shadow-2xl">✨ در حال جادو کردن پالت‌ها…</div>
+  </div>
+
+  <script>
+    // ---------- Utilities ----------
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
+
+    function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+    function randomColor(){
+      // Use HSL for nicer palettes, then convert to HEX
+      const h = randInt(0,360), s = randInt(55,85), l = randInt(35,70);
+      return hslToHex(h,s,l);
+    }
+
+    function hexToRgb(hex){
+      hex = hex.replace('#','');
+      if(hex.length===3) hex = hex.split('').map(ch=>ch+ch).join('');
+      const num = parseInt(hex,16);
+      return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+    }
+
+    function rgbToHex(r,g,b){ return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase(); }
+
+    function hslToRgb(h,s,l){
+      h/=360; s/=100; l/=100;
+      const a = s*Math.min(l,1-l);
+      const f = n => {
+        const k = (n + h*12) % 12;
+        const color = l - a * Math.max(-1, Math.min(k-3, Math.min(9-k,1)));
+        return Math.round(255*color);
+      }
+      return { r:f(0), g:f(8), b:f(4) };
+    }
+
+    function hslToHex(h,s,l){ const {r,g,b} = hslToRgb(h,s,l); return rgbToHex(r,g,b); }
+
+    function parseColor(input){
+      try {
+        // Accept hex, rgb(), hsl()
+        const ctx = document.createElement('canvas').getContext('2d');
+        ctx.fillStyle = input;
+        const computed = ctx.fillStyle; // normalized string
+        // Convert to hex
+        // Create a temp div to get rgb values
+        const d = document.createElement('div');
+        d.style.color = computed; document.body.appendChild(d);
+        const rgb = getComputedStyle(d).color; document.body.removeChild(d);
+        const m = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if(!m) return null;
+        return rgbToHex(+m[1],+m[2],+m[3]);
+      } catch{ return null; }
+    }
+
+    function relLuminance({r,g,b}){
+      // sRGB to linear
+      const srgb = [r,g,b].map(v=> v/255 <= 0.03928 ? v/255/12.92 : Math.pow((v/255+0.055)/1.055, 2.4));
+      return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2];
+    }
+
+    function contrastRatio(hex1, hex2){
+      const L1 = relLuminance(hexToRgb(hex1));
+      const L2 = relLuminance(hexToRgb(hex2));
+      const [A,B] = L1 > L2 ? [L1,L2] : [L2,L1];
+      return (A + 0.05) / (B + 0.05);
+    }
+
+    function hexToHsl(hex){
+      const {r,g,b} = hexToRgb(hex);
+      const r1=r/255, g1=g/255, b1=b/255;
+      const max=Math.max(r1,g1,b1), min=Math.min(r1,g1,b1);
+      let h,s,l=(max+min)/2;
+      if(max===min){ h=s=0; }
+      else {
+        const d=max-min;
+        s = l>0.5? d/(2-max-min) : d/(max+min);
+        switch(max){
+          case r1: h=(g1-b1)/d + (g1<b1?6:0); break;
+          case g1: h=(b1-r1)/d + 2; break;
+          case b1: h=(r1-g1)/d + 4; break;
+        }
+        h/=6;
+      }
+      return { h: Math.round(h*360), s: Math.round(s*100), l: Math.round(l*100) };
+    }
+
+    // ---------- State ----------
+    let palette = [];
+    let locks = []; // parallel to palette
+
+    // ---------- Theme ----------
+    const themeToggle = $('#themeToggle');
+    const initTheme = () => {
+      const saved = localStorage.getItem('colorify-theme') || 'dark';
+      if(saved==='dark'){ document.documentElement.classList.add('dark'); themeToggle.checked = true; }
+    }
+    initTheme();
+    themeToggle.addEventListener('change', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('colorify-theme', document.documentElement.classList.contains('dark')? 'dark':'light');
+    });
+
+    // ---------- Toast ----------
+    const toast = $('#toast');
+    function showToast(text='📋 کپی شد'){ toast.firstElementChild.textContent = text; toast.classList.remove('hidden'); setTimeout(()=> toast.classList.add('hidden'), 1100); }
+
+    // ---------- FX Overlay ----------
+    const fx = $('#fxOverlay');
+    function playFX(){
+      fx.style.display='flex';
+      // spawn sparks
+      for(let i=0;i<24;i++){
+        const s = document.createElement('div');
+        s.className='spark';
+        s.style.left = Math.random()*100+'%';
+        s.style.top = Math.random()*100+'%';
+        s.style.animationDelay = (Math.random()*0.6)+'s';
+        fx.appendChild(s);
+        setTimeout(()=> s.remove(), 1200);
+      }
+      setTimeout(()=> fx.style.display='none', 900);
+    }
+
+    // ---------- Palette Rendering ----------
+    const grid = $('#paletteGrid');
+
+    function renderPalette(){
+      grid.innerHTML = '';
+      palette.forEach((hex, idx) => {
+        const locked = locks[idx];
+        const card = document.createElement('div');
+        card.className = 'color-card relative rounded-3xl overflow-hidden shadow-neu';
+        card.style.background = hex;
+        card.innerHTML = `
+          <button class="lock-btn absolute top-2 left-2 z-10 glass dark:glass-dark text-sm px-3 py-1 rounded-full select-none">${locked? '🔒':'🔓'}</button>
+          <button class="absolute top-2 right-2 z-10 glass dark:glass-dark text-xs px-2 py-1 rounded-full select-none">کپی</button>
+          <div class="p-4 pt-12 min-h-[120px] flex flex-col justify-between text-white/95" style="text-shadow: 0 2px 6px rgba(0,0,0,.35)">
+            <div class="text-xs opacity-80">رنگ ${idx+1}</div>
+            <div class="font-extrabold text-lg ltr">${hex}</div>
+            <div class="text-[10px] opacity-90 ltr">${(()=>{const {h,s,l}=hexToHsl(hex);return `hsl(${h},${s}%,${l}%)`;})()}</div>
+          </div>`;
+
+        // Copy handler
+        card.querySelector('button:nth-child(2)').addEventListener('click', async (e)=>{
+          await navigator.clipboard.writeText(hex);
+          showToast('📋 کپی شد: '+hex);
+        });
+        // Lock handler
+        card.querySelector('button:nth-child(1)').addEventListener('click', ()=>{
+          locks[idx] = !locks[idx];
+          renderPalette();
+        });
+        // Click on card copies too
+        card.addEventListener('click', (e)=>{
+          if(e.target.tagName.toLowerCase()==='button') return;
+          navigator.clipboard.writeText(hex).then(()=> showToast('📋 '+hex+' کپی شد'));
+        });
+
+        grid.appendChild(card);
+      });
+
+      updateAnalysis();
+    }
+
+    // ---------- Generate ----------
+    const countRange = $('#countRange');
+    const countBadge = $('#countBadge');
+    countRange.addEventListener('input', ()=> countBadge.textContent = countRange.value);
+
+    function generatePalette(){
+      playFX();
+      const count = +countRange.value;
+      // Preserve locked colors and positions
+      let next = new Array(count);
+      let nextLocks = new Array(count).fill(false);
+
+      // Place old locked values if within new range
+      for(let i=0;i<Math.min(palette.length, count);i++){
+        if(locks[i]){ next[i] = palette[i]; nextLocks[i] = true; }
+      }
+      // Fill gaps
+      for(let i=0;i<count;i++){
+        if(!next[i]) next[i] = randomColor();
+      }
+      palette = next; locks = nextLocks;
+      renderPalette();
+    }
+
+    // ---------- Manual add ----------
+    $('#btnAddColor').addEventListener('click', ()=>{
+      const val = $('#manualColor').value.trim();
+      const hex = parseColor(val);
+      if(!hex) return showToast('⚠️ ورودی رنگ معتبر نیست');
+      const count = +countRange.value;
+      if(palette.length < count){ palette.push(hex); locks.push(false); }
+      else { palette[palette.length-1] = hex; locks[palette.length-1] = false; }
+      renderPalette();
+    });
+
+    // ---------- Save / LocalStorage ----------
+    const storageKey = 'colorify-palettes-v3';
+
+    function readStore(){ return JSON.parse(localStorage.getItem(storageKey) || '[]'); }
+    function writeStore(arr){ localStorage.setItem(storageKey, JSON.stringify(arr)); }
+
+    function savePalette(){
+      const name = prompt('نام پالت؟', 'پالت جدید');
+      if(!name) return;
+      const category = prompt('دسته/برچسب؟', 'عمومی') || 'عمومی';
+      const rec = { id: Date.now(), name, category, colors: palette.slice(), createdAt: new Date().toISOString() };
+      const arr = readStore(); arr.unshift(rec); writeStore(arr); renderSaved(); showToast('💾 ذخیره شد');
+    }
+
+    function renderSaved(){
+      const list = $('#savedList'); list.innerHTML='';
+      const filter = $('#filterCat').value.trim();
+      const arr = readStore().filter(x=> !filter || x.category.includes(filter) || x.name.includes(filter));
+      if(arr.length===0){ list.innerHTML = '<div class="text-sm text-slate-600 dark:text-slate-300">چیزی ذخیره نشده…</div>'; return; }
+      for(const rec of arr){
+        const card = document.createElement('div');
+        card.className = 'glass dark:glass-dark rounded-2xl p-3 shadow-neu flex flex-col gap-3';
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-bold text-sm">${rec.name}</div>
+              <div class="text-xs text-slate-600 dark:text-slate-300">${rec.category}</div>
+            </div>
+            <div class="text-[10px] ltr text-slate-500">${new Date(rec.createdAt).toLocaleString('fa-IR')}</div>
+          </div>
+          <div class="grid grid-cols-5 gap-1">
+            ${rec.colors.map(c=>`<button class='h-8 rounded-xl shadow ring-1 ring-white/40' style='background:${c}' title='کپی ${c}' data-hex='${c}'></button>`).join('')}
+          </div>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button class="btn-3d bg-white/70 dark:bg-white/10 text-slate-900 dark:text-white" data-act="load">بازخوانی</button>
+            <button class="btn-3d bg-gradient-to-r from-red-300 to-rose-400 text-slate-900" data-act="del">حذف</button>
+            <button class="btn-3d bg-gradient-to-r from-indigo-300 to-sky-300 text-slate-900" data-act="json">JSON</button>
+            <button class="btn-3d bg-gradient-to-r from-amber-300 to-pink-300 text-slate-900" data-act="png">PNG</button>
+          </div>
+        `;
+        // copy single color
+        card.querySelectorAll('[data-hex]').forEach(btn=> btn.addEventListener('click', ()=>{ navigator.clipboard.writeText(btn.dataset.hex); showToast('📋 '+btn.dataset.hex+' کپی شد'); }));
+        // actions
+        card.querySelectorAll('[data-act]').forEach(btn=> btn.addEventListener('click', ()=>{
+          const act = btn.dataset.act;
+          if(act==='load'){ palette = rec.colors.slice(); locks = new Array(palette.length).fill(false); countRange.value = palette.length; countBadge.textContent = palette.length; renderPalette(); showToast('↩️ بازخوانی شد'); }
+          if(act==='del'){ const arr2 = readStore().filter(x=> x.id!==rec.id); writeStore(arr2); renderSaved(); showToast('🗑️ حذف شد'); }
+          if(act==='json'){ exportJSON([rec]); }
+          if(act==='png'){ exportPNG(rec.colors, rec.name); }
+        }));
+
+        list.appendChild(card);
+      }
+    }
+
+    $('#btnSave').addEventListener('click', savePalette);
+    $('#filterCat').addEventListener('input', renderSaved);
+    $('#btnClearAll').addEventListener('click', ()=>{ if(confirm('همه پالت‌ها حذف شوند؟')){ writeStore([]); renderSaved(); }});
+
+    // ---------- Export / Import ----------
+    function exportJSON(records=null){
+      const data = records || [{ name:'Current Palette', category:'موقت', colors: palette.slice(), createdAt: new Date().toISOString() }];
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `colorify-${Date.now()}.json`;
+      a.click();
+    }
+    $('#btnExportJSON').addEventListener('click', ()=> exportJSON());
+
+    function exportPNG(colors=palette, name='palette'){
+      const width = 1200, height = 360;
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      const w = width/colors.length;
+      colors.forEach((c,i)=>{ ctx.fillStyle = c; ctx.fillRect(i*w,0,w,height); });
+      // Header text
+      ctx.fillStyle = 'rgba(255,255,255,.95)';
+      ctx.font = '700 28px Vazirmatn, sans-serif';
+      ctx.fillText('Colorify v3 Pro', 24, 48);
+      ctx.font = '400 18px Vazirmatn, sans-serif';
+      ctx.fillText(colors.join(' · '), 24, 78);
+      const link = document.createElement('a');
+      link.download = `${name.replace(/\s+/g,'_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    $('#btnExportPNG').addEventListener('click', ()=> exportPNG());
+
+    $('#importFile').addEventListener('change', (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try {
+          const arr = JSON.parse(reader.result);
+          if(!Array.isArray(arr)) throw new Error('bad');
+          const store = readStore();
+          arr.forEach(rec=>{
+            if(rec.colors && Array.isArray(rec.colors)){
+              store.unshift({ id: Date.now()+Math.random(), name: rec.name||'واردشده', category: rec.category||'واردشده', colors: rec.colors, createdAt: new Date().toISOString() });
+            }
+          });
+          writeStore(store); renderSaved(); showToast('📥 وارد شد');
+        } catch { alert('فایل JSON معتبر نیست'); }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    // ---------- Analysis & Harmony ----------
+    function updateAnalysis(){
+      if(palette.length===0){ $('#avgLum').textContent='—'; $('#hueRange').textContent='—'; $('#minContrast').textContent='—'; $('#contrastTable').innerHTML=''; drawHarmony([]); return; }
+      const lums = palette.map(c=> relLuminance(hexToRgb(c)));
+      const avg = lums.reduce((a,b)=>a+b,0)/lums.length;
+      $('#avgLum').textContent = avg.toFixed(3);
+      const hues = palette.map(c=> hexToHsl(c).h).sort((a,b)=>a-b);
+      const hueRange = hues[hues.length-1]-hues[0];
+      $('#hueRange').textContent = hueRange + '°';
+      // neighbor contrast
+      let minC = Infinity;
+      for(let i=0;i<palette.length-1;i++) minC = Math.min(minC, contrastRatio(palette[i], palette[i+1]));
+      $('#minContrast').textContent = minC===Infinity? '—' : minC.toFixed(2) + (minC>=4.5? ' ✅':' ⚠️');
+      // contrast table
+      const tbl = document.createElement('table');
+      tbl.className = 'w-full text-center';
+      const header = document.createElement('tr');
+      header.innerHTML = '<th></th>'+palette.map((_,i)=>`<th class="px-2">${i+1}</th>`).join('');
+      tbl.appendChild(header);
+      for(let r=0;r<palette.length;r++){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class='font-bold px-1'>${r+1}</td>` + palette.map((_,c)=>{
+          if(r===c) return `<td class='opacity-40'>—</td>`;
+          const cr = contrastRatio(palette[r], palette[c]);
+          const ok = cr>=4.5; return `<td class='px-1 ${ok? 'text-emerald-600 dark:text-emerald-400':'text-rose-600 dark:text-rose-400'}'>${cr.toFixed(2)}</td>`;
+        }).join('');
+        tbl.appendChild(tr);
+      }
+      const host = $('#contrastTable'); host.innerHTML=''; host.appendChild(tbl);
+      drawHarmony(palette);
+    }
+
+    function drawHarmony(colors){
+      const canvas = $('#harmonyChart'); const ctx = canvas.getContext('2d');
+      const W = canvas.width = canvas.clientWidth * devicePixelRatio;
+      const H = canvas.height = canvas.clientHeight * devicePixelRatio;
+      ctx.clearRect(0,0,W,H);
+      const cx=W/2, cy=H/2, R=Math.min(W,H)/2 - 10*devicePixelRatio;
+      // wheel
+      for(let i=0;i<360;i++){
+        ctx.beginPath();
+        ctx.strokeStyle = hslToHex(i,100,50);
+        ctx.arc(cx,cy,R,(i-1)*Math.PI/180, i*Math.PI/180);
+        ctx.stroke();
+      }
+      // dots
+      colors.forEach(c=>{
+        const {h} = hexToHsl(c);
+        const angle = (h-90) * Math.PI/180; // rotate so 0° is right
+        const x = cx + Math.cos(angle)*R*0.9;
+        const y = cy + Math.sin(angle)*R*0.9;
+        ctx.beginPath(); ctx.fillStyle = c; ctx.arc(x,y,6*devicePixelRatio,0,Math.PI*2); ctx.fill();
+        // line to center
+        ctx.beginPath(); ctx.strokeStyle = c+'AA'; ctx.moveTo(cx,cy); ctx.lineTo(x,y); ctx.stroke();
+      });
+    }
+
+    // ---------- Init ----------
+    $('#btnGenerate').addEventListener('click', generatePalette);
+    window.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); generatePalette(); } });
+
+    // first run
+    generatePalette();
+    renderSaved();
+  </script>
+</body>
+</html>
