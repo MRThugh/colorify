@@ -18,7 +18,8 @@
 ![Repo Size](https://img.shields.io/github/repo-size/MRThugh/Colorify)
 ![Stars](https://img.shields.io/github/stars/MRThugh/Colorify?style=social)
 ![Forks](https://img.shields.io/github/forks/MRThugh/Colorify?style=social)
-
+[![Persian](https://img.shields.io/badge/lang-PERSIAN-green)](README-fa.md)
+[![English](https://img.shields.io/badge/lang-English-blue)](README.md)
 ---
 
 ## Philosophy
